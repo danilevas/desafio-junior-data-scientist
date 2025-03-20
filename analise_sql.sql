@@ -311,31 +311,65 @@ LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
 GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final, data_chamado
 ORDER BY evento_id, data_chamado
 
--- Agora vamos aninhar essa consulta em outra para termos a média de chamado entre os dias de cada evento (435,18 MB):
-WITH chamados_por_dia_e_evento AS (
-    SELECT 
-        e.evento_id,
-        e.evento,
-        e.data_inicial,
-        e.data_final,
-        DATE(c.data_inicio) as data_chamado,
-        COUNT(c.id_chamado) AS total_chamados,
-    FROM `teste-big-query-454013.meu_dataset.eventos_numerados` e
-    LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
-        ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
-        AND c.tipo = 'Perturbação do sossego'
-        AND c.id_chamado IS NOT NULL
-    GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final, data_chamado
-    ORDER BY evento_id, data_chamado
+-- Agora vamos aninhar essa consulta em outra para termos a média de chamado entre os dias de cada evento.
+-- Além disso vamos aproveitar para criar uma tabela com esses dados, o que nos será útil para a questão 10 (435,18 MB):
+CREATE OR REPLACE TABLE `processo-seletivo-pcrj.meu_dataset.media_diaria_chamados_evento` AS
+WITH media_diaria_chamados_evento AS (
+    WITH chamados_por_dia_e_evento AS (
+        SELECT 
+            e.evento_id,
+            e.evento,
+            e.data_inicial,
+            e.data_final,
+            DATE(c.data_inicio) as data_chamado,
+            COUNT(c.id_chamado) AS total_chamados,
+        FROM `processo-seletivo-pcrj.meu_dataset.eventos_numerados` e
+        LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
+            ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
+            AND c.tipo = 'Perturbação do sossego'
+            AND c.id_chamado IS NOT NULL
+        GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final, data_chamado
+        ORDER BY evento_id, data_chamado
+    )
+    SELECT evento_id, evento, data_inicial, data_final, ROUND(AVG(total_chamados), 2) AS media_diaria_chamados
+    FROM chamados_por_dia_e_evento
+    GROUP BY evento_id, evento, data_inicial, data_final
+    ORDER BY media_diaria_chamados DESC
 )
-SELECT evento_id, evento, data_inicial, data_final, ROUND(AVG(total_chamados), 2) AS media_diaria_chamados
-FROM chamados_por_dia_e_evento
-GROUP BY evento_id, evento, data_inicial, data_final
+SELECT * FROM media_diaria_chamados_evento
 ORDER BY media_diaria_chamados DESC;
 -- Podemos ver, pela tabela gerada por essa consulta, as médias diárias de todos os eventos.
+-- Arquivo: "tabelas/9.2_medias_diarias_chamados_tipo_perturb_sossego_eventos"
 
 -- Resposta Questão 9: o evento com a maior média diária de chamados com o tipo "Perturbação do sossego" foi
 -- a segunda parte do Rock in Rio 2022, compreendida entre os dias 08/09/2022 e 11/09/2022, com uma média de 142.25 chamados por dia de evento.
 
 -- Questão 10. Compare as médias diárias de chamados abertos desse subtipo durante os eventos específicos (Reveillon, Carnaval e Rock in Rio)
 -- e a média diária de chamados abertos desse subtipo considerando todo o período de 01/01/2022 até 31/12/2023.
+
+-- Primeiro vamos descobrir a média diária de chamados abertos com o tipo "Perturbação do sossego" no período de 01/01/2022 até 31/12/2023 (435,29 MB):
+WITH chamados_por_dia AS (
+    SELECT 
+        DATE(data_inicio) as data_chamado,
+        COUNT(id_chamado) AS total_chamados,
+    FROM `datario.adm_central_atendimento_1746.chamado`
+    WHERE tipo = 'Perturbação do sossego'
+    AND id_chamado IS NOT NULL
+    AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2023-12-31' 
+    GROUP BY data_chamado
+    ORDER BY data_chamado
+)
+SELECT ROUND(AVG(total_chamados), 2) AS media_diaria_chamados
+FROM chamados_por_dia;
+-- Temos que essa média é de 90.52 chamados por dia.
+
+-- Vamos então, comparar as médias diárias em cada evento a essa média de 90.52 chamados por dia.
+-- Criei um campo chamado "pct_diferenca" que nos diz quantos % maior ou menor os valores da média diária dos eventos são
+-- em comparação à média diária no período de 01/01/2022 até 31/12/2023 (396 B):
+SELECT evento_id, evento, data_inicial, data_final, media_diaria_chamados,
+CONCAT(ROUND(((media_diaria_chamados - 90.52)/90.52) * 100, 2), '%') AS pct_diferenca
+FROM `processo-seletivo-pcrj.meu_dataset.media_diaria_chamados_evento`
+ORDER BY media_diaria_chamados DESC;
+
+-- Resposta Questão 10. As comparações das médias diárias de chamados com o tipo "Perturbação do sossego" nos períodos de cada evento da tabela de eventos
+-- e no período de 01/01/2022 até 31/12/2023 estão no arquivo "tabelas/10.2_compara_medias_diarias_chamados_tipo_perturb_sossego_eventos_vs_2022_2023"
