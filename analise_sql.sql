@@ -267,10 +267,10 @@ ORDER BY e.evento_id, c.id_chamado;
 -- contidos na tabela de eventos (Reveillon, Carnaval e Rock in Rio), porém temos 1889 chamados com o subtipo "Perturbação do sossego"
 -- abertos durante esses períodos.
 
--- A tabela dos eventos tratada está no arquivo "tabelas/7.1_eventos_tratados.csv"
+-- A tabela dos eventos tratada está no arquivo "csvs/analise_sql/7.1_eventos_tratados.csv"
 -- e a tabela com os chamados de tipo "Perturbação do sossego" abertos durante os eventos selecionados pelo id_chamado,
 -- juntamente com o evento a qual estão associados (caracterizado pelo evento_id),
--- está no arquivo "tabelas/7.2_chamados_tipo_perturb_sossego_dias_de_evento.csv".
+-- está no arquivo "csvs/analise_sql/7.2_chamados_tipo_perturb_sossego_dias_de_evento.csv".
 -- Coloquei também nesse arquivo as datas de início e fim dos eventos para diferenciar os de mesmo nome sem ter que consultar duas tabelas.
 
 -- Questão 8. Quantos chamados desse subtipo foram abertos em cada evento?
@@ -296,7 +296,7 @@ ORDER BY e.evento_id;
 
 -- Resposta Questão 8: 0 chamados com o subtipo "Perturbação do sossego" foram abertos nos dias dos eventos da tabela de eventos,
 -- mas 1889 chamados com o TIPO "Perturbação do sossego" foram abertos nesses dias. Para ver quantos chamados foram abertos nos dias de cada evento,
--- consulte o arquivo "tabelas/8.2_num_chamados_tipo_perturb_sossego_por_evento"
+-- consulte o arquivo "csvs/analise_sql/8.2_num_chamados_tipo_perturb_sossego_por_evento"
 
 -- Questão 9. Qual evento teve a maior média diária de chamados abertos desse subtipo?
 
@@ -339,7 +339,7 @@ WITH media_diaria_chamados_evento AS (
 SELECT * FROM media_diaria_chamados_evento
 ORDER BY media_diaria_chamados DESC;
 -- Podemos ver, pela tabela gerada por essa consulta, as médias diárias de todos os eventos.
--- Arquivo: "tabelas/9.2_medias_diarias_chamados_tipo_perturb_sossego_eventos"
+-- Arquivo: "csvs/analise_sql/9.2_medias_diarias_chamados_tipo_perturb_sossego_eventos"
 
 -- Resposta Questão 9: o evento com a maior média diária de chamados com o tipo "Perturbação do sossego" foi
 -- a segunda parte do Rock in Rio 2022, compreendida entre os dias 08/09/2022 e 11/09/2022, com uma média de 142.25 chamados por dia de evento.
@@ -372,4 +372,4 @@ FROM `processo-seletivo-pcrj.meu_dataset.media_diaria_chamados_evento`
 ORDER BY media_diaria_chamados DESC;
 
 -- Resposta Questão 10. As comparações das médias diárias de chamados com o tipo "Perturbação do sossego" nos períodos de cada evento da tabela de eventos
--- e no período de 01/01/2022 até 31/12/2023 estão no arquivo "tabelas/10.2_compara_medias_diarias_chamados_tipo_perturb_sossego_eventos_vs_2022_2023"
+-- e no período de 01/01/2022 até 31/12/2023 estão no arquivo "csvs/analise_sql/10.2_compara_medias_diarias_chamados_tipo_perturb_sossego_eventos_vs_2022_2023"
