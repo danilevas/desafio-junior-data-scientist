@@ -1,4 +1,5 @@
--- NO FINAL BOTAR ; NO FINAL DE TODAS AS CONSULTAS
+-- Consultas SQL e respostas das perguntas de "perguntas_sql.md"
+-- Entre parênteses consta o uso de recursos de processamento do BigQuery de cada consulta
 
 -- ||| Localização de chamados do 1746 |||
 -- Questão 1. Quantos chamados foram abertos no dia 01/04/2023?
@@ -10,7 +11,7 @@ WHERE id_chamado IS NULL;
 -- Aqui vemos que há 200 células em que id_chamado é nulo, logo quando fizer meu COUNT, é bom fazer COUNT(id_chamado) ao invés de COUNT(*),
 -- para já desconsiderar as linhas com id_chamado nulo
 
--- INVESTIGAÇÃO DOS NULLS (são todos da GM no mesmo dia e horário de 2020)
+-- Curiosamente todos os id_chamado nulos são de chamados relacionados à Guarda Municipal no mesmo dia e horário de 2020.
 
 -- Como o campo data_inicio está com data e hora e eu quero só a data, eu vou usar a função DATE() para extrair só o necessário e agrupar corretamente
 -- Agrupando por data_inicio (só pela data, sem horário) e contando quantos id_chamados válidos (não nulos) existem para cada data,
@@ -91,8 +92,9 @@ FROM `datario.adm_central_atendimento_1746.chamado`
 WHERE DATE(data_inicio) = '2023-04-01' AND id_bairro IS NULL;
 -- Temos 131 chamados com id_bairro = NULL
 
--- Olhamos então para os casos em que id_bairro = NULL na tabela de chamados, para averiguar a situação
--- AINDA NÃO ENTENDI O PORQUÊ
+-- Olhamos então para os casos em que id_bairro = NULL na tabela de chamados, para averiguar a situação.
+-- Resposta Questão 5: Temos 131 chamados com id_bairro = NULL. Os chamados não tem nenhum tipo de dado de localização. Minhas suposições são que o responsável não pediu ou não conseguiu descobrir a localização
+-- da pessoa que ligou, ou que são chamados para os quais essa informação não era relevante.
 
 -- ||| Chamados do 1746 em grandes eventos |||
 -- Questão 6. Quantos chamados com o subtipo "Perturbação do sossego" foram abertos desde 01/01/2022 até 31/12/2023 (incluindo extremidades)?
@@ -103,7 +105,7 @@ FROM `datario.adm_central_atendimento_1746.chamado`
 WHERE subtipo = 'Perturbação do sossego'
 AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2023-12-31'
 GROUP BY subtipo
-ORDER BY subtipo
+ORDER BY subtipo;
 -- A consulta não nos traz nenhum resultado. Isso deve significar que não houveram chamados com esse subtipo no período especificado.
 -- Para termos certeza, vamos checar isso.
 
@@ -112,7 +114,7 @@ SELECT subtipo, COUNT(id_chamado) AS total_chamados
 FROM `datario.adm_central_atendimento_1746.chamado`
 WHERE subtipo = 'Perturbação do sossego'
 GROUP BY subtipo
-ORDER BY subtipo
+ORDER BY subtipo;
 -- A consulta nos retorna que existem 21991 chamados com esse subtipo no dataset.
 -- Vamos ver agora quando esses chamados foram abertos.
 
@@ -121,7 +123,7 @@ SELECT subtipo, DATE(data_inicio) AS data, COUNT(id_chamado) AS total_chamados
 FROM `datario.adm_central_atendimento_1746.chamado`
 WHERE subtipo = 'Perturbação do sossego'
 GROUP BY subtipo, data
-ORDER BY data
+ORDER BY data;
 -- Olhando a tabela proveniente dessa consulta, vemos que após o dia 31/12/2020, só houveram chamados do subtipo "Perturbação do sossego" novamente
 -- no dia 08/03/2024. Há um gap de mais de 3 anos sem chamados desse subtipo. Logo, realmente podemos afirmar que houveram 0 chamados deste subtipo
 -- desde 01/01/2022 até 31/12/2023 (incluindo extremidades).
@@ -131,7 +133,7 @@ ORDER BY data
 -- Vendo todos os subtipos distintos na tabela chamado em ordem alfabética (548,16 MB)
 SELECT DISTINCT subtipo
 FROM `datario.adm_central_atendimento_1746.chamado`
-ORDER BY subtipo
+ORDER BY subtipo;
 -- Olhando essa tabela, vejo que a única versão do subtipo "Perturbação do sossego" é a escrita dessa forma
 -- (chequei por versões com diferenciação de maiúscula-minúscula ou de acento)
 
@@ -139,7 +141,7 @@ ORDER BY subtipo
 -- Logo, chequei todos os tipos presentes
 SELECT DISTINCT tipo
 FROM `datario.adm_central_atendimento_1746.chamado`
-ORDER BY tipo
+ORDER BY tipo;
 -- Sim, esse tipo existe! Vamos analisar em que datas foram feitos chamados deste tipo
 
 -- Checando em quais datas houveram chamados do tipo "Perturbação do sossego" (435,18 MB)
@@ -147,7 +149,7 @@ SELECT tipo, DATE(data_inicio) AS data, COUNT(id_chamado) AS total_chamados
 FROM `datario.adm_central_atendimento_1746.chamado`
 WHERE tipo = 'Perturbação do sossego'
 GROUP BY tipo, data
-ORDER BY data
+ORDER BY data;
 -- Ahh, agora sim! Olhando a tabela retornada por essa consulta, vemos que chamados do TIPO "Perturbação do sossego" ocorrem com certa consistência desde
 -- 01/01/2021 até hoje! Trocando subtipo por tipo, podemos responder às perguntas dessa seção.
 
@@ -157,11 +159,11 @@ FROM `datario.adm_central_atendimento_1746.chamado`
 WHERE tipo = 'Perturbação do sossego'
 AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2023-12-31'
 GROUP BY tipo
-ORDER BY tipo
+ORDER BY tipo;
 -- Aqui verificamos que houveram 66078 chamados abertos com o tipo "Perturbação do sossego" no período especificado.
 
--- /// EXPLICAR MELHOR O QUE DEVE TER ACONTECIDO NESSA TROCA TIPO VS SUBTIPO, LEVANDO EM CONTA OS PERÍODOS \\\
--- /// FAZER ANÁLISE TIPO VS SUBTIPO ("Perturbação do sossego") \\\
+-- Por algum motivo "Perturbação do sossego" era usado exclusivamente como subtipo até 31/12/2020, e depois dessa data ele foi usado
+-- quase exclusivamente como tipo (tirando um breve período em Março de 2024).
 
 -- Resposta Questão 6: nenhum chamado com o subtipo "Perturbação do sossego" foi aberto desde 01/01/2022 até 31/12/2023 (incluindo extremidades),
 -- porém, neste período, foram abertos 66078 chamados com o TIPO "Perturbação do sossego".
@@ -169,7 +171,7 @@ ORDER BY tipo
 -- Questão 7. Selecione os chamados com esse subtipo que foram abertos durante os eventos contidos na tabela de eventos (Reveillon, Carnaval e Rock in Rio)
 
 -- Quando eu fui olhar a tabela de eventos, percebi que haviam alguns problemas que dificultariam minha análise:
-    -- Eventos sem data_inicial ou data-final
+    -- Eventos sem data_inicial ou data_final
     -- Linhas sem dado relevante, apenas NULL, "nan" e NaN (desnecessárias)
     -- Discrepância entre a representação da ausência de valor (NULL, "nan" como texto e NaN)
     -- Falta de ID para diferenciar mais facilmente eventos com o mesmo nome, mas que ocorreram em datas diferentes (edições diferentes do mesmo evento)
@@ -239,8 +241,6 @@ WITH eventos_numerados AS (
 SELECT * FROM eventos_numerados
 ORDER BY data_inicial, evento;
 
--- PLUS: MUDAR A COLUNA ANO PARA FICAR CERTINHA SEM SER MANUAL
-
 -- Agora sim posso analisar os dados com mais confiança!
 
 -- Selecionando os chamados com subtipo "Perturbação do sossego" em dias de eventos da tabela de eventos:
@@ -309,7 +309,7 @@ LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
     AND c.tipo = 'Perturbação do sossego'
     AND c.id_chamado IS NOT NULL
 GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final, data_chamado
-ORDER BY evento_id, data_chamado
+ORDER BY evento_id, data_chamado;
 
 -- Agora vamos aninhar essa consulta em outra para termos a média de chamado entre os dias de cada evento.
 -- Além disso vamos aproveitar para criar uma tabela com esses dados, o que nos será útil para a questão 10 (435,18 MB):

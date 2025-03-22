@@ -1,0 +1,10 @@
+evento_id,evento,data_inicial,data_final,total_chamados,media_diaria,tipo
+1,Rock in Rio 2022*(1ª parcela de dias),2022-09-02,2022-09-04,415,138.33,Rock in Rio
+2,Rock in Rio 2022*(2ª parcela de dias),2022-09-08,2022-09-11,569,142.25,Rock in Rio
+3,Réveillon*2022-2023,2022-12-30,2023-01-01,159,53.0,Réveillon
+4,Carnaval 2023,2023-02-18,2023-02-21,267,66.75,Carnaval
+5,Réveillon*2023-2024,2023-12-30,2024-01-01,104,34.67,Réveillon
+6,Carnaval 2024,2024-02-10,2024-02-14,156,31.2,Carnaval
+7,Rock in Rio 2024*(1ª parcela de dias),2024-09-13,2024-09-15,12,4.0,Rock in Rio
+8,Rock in Rio 2024*(2ª parcela de dias),2024-09-19,2024-09-22,13,3.25,Rock in Rio
+9,Réveillon*2024-2025,2024-12-29,2025-01-01,194,48.5,Réveillon

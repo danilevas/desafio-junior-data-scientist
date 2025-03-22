@@ -1,7 +1,6 @@
 import json
 import requests
 import datetime
-
 import openmeteo_requests
 import requests_cache
 import pandas as pd
@@ -14,18 +13,18 @@ def extrai_dia_semana(data):
     # Definir a data desejada (ano, mês, dia)
     data = datetime.date(int(data[0:4]), int(data[5:7]), int(data[8:10]))
 
-    # Descobrir o dia da semana (0 = Segunda, 6 = Domingo)
+    # Retorna o dia da semana (0 = Segunda, 6 = Domingo)
     return data.weekday()
+
+# Cria o arquivo txt com as respostas
+with open('respostas_analise_api.txt', 'w', encoding="utf-8") as f: pass
 
 response = requests.get('https://date.nager.at/api/v3/publicholidays/2024/BR')
 public_holidays = json.loads(response.content)
 
-# Teste
-for feriado in public_holidays:
-    print(feriado['date'])
-
 # Q1.
-print(f"Q1. Há {len(public_holidays)} feriados no Brasil em 2024")
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Q1. Há {len(public_holidays)} feriados no Brasil em 2024\n\n")
 
 # Q2.
 meses = [f"{m:02d}" for m in range(1, 13)]
@@ -37,7 +36,8 @@ for feriado in public_holidays:
     else:
         feriados_por_mes[mes] += 1
 
-print(f"Q2. O mês com mais feriados no Brasil em 2024 é o mês {max(feriados_por_mes, key=feriados_por_mes.get)}")
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Q2. O mês com mais feriados no Brasil em 2024 é o mês {max(feriados_por_mes, key=feriados_por_mes.get)}\n\n")
 
 # Q3.
 feriados_em_dias_de_semana = 0
@@ -47,7 +47,8 @@ for feriado in public_holidays:
         # É dia de semana
         feriados_em_dias_de_semana += 1
 
-print(f"Q3. Há {feriados_em_dias_de_semana} feriados no Brasil em 2024 que caem em dias de semana.")
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Q3. Há {feriados_em_dias_de_semana} feriados no Brasil em 2024 que caem em dias de semana.\n\n")
 
 # Q4.
 
@@ -70,16 +71,20 @@ def get_temperatura_hora_em_hora(lat, long, data_inicio, data_fim):
         "hourly": "temperature_2m,weather_code",
         "temperature_unit": "celsius",
         "timezone": "America/Sao_Paulo",
-        "cell_selection": "nearest"  # Está me jogando para Maria da Graça
+        "cell_selection": "nearest"
     }
     responses = openmeteo.weather_api(url, params=params)
 
+    # Esse cell_selection está me jogando para Maria da Graça, foi o lugar que eu consegui no Rio.
+    # Quando eu botava um ponto no Centro ele me jogava para Niterói, pelo jeito que o grid dessa API funciona.
+    # Então, eu pensei, se não dá para colocar no Centro, que é o coração do Rio, vou tentar o ponto mais próximo, que foi esse.
+
     # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
-    print(f"\nCoordinates {response.Latitude()}°N {response.Longitude()}°E")
-    print(f"Elevation {response.Elevation()} m asl")
-    print(f"Timezone {response.Timezone()}{response.TimezoneAbbreviation()}")
-    print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
+    with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+        f.write(f"Coordenadas {response.Latitude()}°N {response.Longitude()}°E\n")
+        f.write(f"Elevação {response.Elevation()} m asl\n")
+        f.write(f"Fuso horário {response.Timezone()}{response.TimezoneAbbreviation()}\n\n")
 
     # Process hourly data
     hourly = response.Hourly()
@@ -98,7 +103,6 @@ def get_temperatura_hora_em_hora(lat, long, data_inicio, data_fim):
     }
 
     hourly_dataframe = pd.DataFrame(data=hourly_data)
-    # print(hourly_dataframe.tail(48))
 
     # Converter a coluna de datas para o Horário de Brasília (GMT-3)
     hourly_dataframe["date"] = hourly_dataframe["date"].dt.tz_convert("America/Sao_Paulo")
@@ -116,9 +120,6 @@ def media_diaria_temperatura(hourly_dataframe):
         .reset_index()
         .rename(columns={"date": "Dia", "temperature_2m": "Temperatura Média"})
     )
-
-    # print(df_media_temp_diaria.tail(32).head(31))
-    # print(df_media_temp_diaria.tail(32).head(31)["Temperatura Média"].mean()) teste julho
 
     df_media_temp_diaria.to_csv("csvs/analise_api/temperaturas_diarias.csv", encoding="utf-8", index=False)
     return df_media_temp_diaria
@@ -139,7 +140,10 @@ def media_mensal_temperatura():
     df_media_temp_mensal = df_media_temp_mensal.drop(columns=["Dia"])
 
     # Reordenar as colunas
-    df_media_temp_mensal = df_media_temp_mensal[["Mês", "Temperatura Média"]]
+    df_media_temp_mensal = df_media_temp_mensal[["Mês", "Temperatura Média", "weather_code"]]
+
+    # Tirando Agosto, por só ter um dia
+    df_media_temp_mensal = df_media_temp_mensal.iloc[:-1]
 
     # Salvar em um novo CSV
     df_media_temp_mensal.to_csv("csvs/analise_api/temperaturas_mensais.csv", index=False)
@@ -150,7 +154,69 @@ hourly_dataframe = get_temperatura_hora_em_hora(-22.91, -43.22, "2024-01-01", "2
 df_media_temp_diaria = media_diaria_temperatura(hourly_dataframe)
 df_media_temp_mensal = media_mensal_temperatura()
 
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Resposta Questão 4: veja o arquivo csvs/analise_api/temperaturas_mensais.csv\n\n")
+
 # Q5.
 
+# Lembrar que pegamos só um dia de dados de Agosto, logo não devemos analisá-lo como mês junto com os outros meses.
+
 def weather_code_pra_descricao(wc):
-    
+    # Carregar o JSON em um DataFrame
+    df_codigos = pd.read_json('jsons/descriptions.json')
+
+    descricao_dia = df_codigos[wc]['day']['description']
+    descricao_noite = df_codigos[wc]['night']['description']
+    if descricao_dia == descricao_noite:
+        return descricao_dia
+    else:
+        return f"{df_codigos[wc]['day']['description']}/{df_codigos[wc]['night']['description']}"
+
+df_media_temp_mensal["weather_code"] = df_media_temp_mensal["weather_code"].apply(weather_code_pra_descricao)
+df_media_temp_mensal.to_csv("csvs/analise_api/clima_mensal.csv", index=False)
+
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Resposta Questão 5: veja o arquivo csvs/analise_api/clima_mensal.csv\n\n")
+
+# Q6.
+clima_feriados = {
+    "Feriados" : [],
+    "Temperatura Média" : [],
+    "Tempo" : []
+}
+
+df_diario = pd.read_csv("csvs/analise_api/temperaturas_diarias.csv", parse_dates=["Dia"])
+
+for feriado in public_holidays:
+    if feriado['date'] > '2024-08-01':
+        break
+    clima_feriados["Feriados"].append(feriado['date'])
+    linha_desse_dia = df_diario[df_diario.iloc[:, 0] == feriado['date']].values.tolist()[0]
+    linha_desse_dia[0] = linha_desse_dia[0].date()
+    clima_feriados["Temperatura Média"].append(float(linha_desse_dia[1]))
+    clima_feriados["Tempo"].append(weather_code_pra_descricao(int(linha_desse_dia[2])))
+
+df_clima_feriados = pd.DataFrame(clima_feriados)
+df_clima_feriados.to_csv("csvs/analise_api/clima_feriados.csv", encoding="utf-8", index=False)
+
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Resposta Questão 6: veja o arquivo csvs/analise_api/clima_feriados.csv\n\n")
+
+# Q7.
+df_feriados_nao_aprov = df_clima_feriados[(df_clima_feriados["Temperatura Média"] < 20) | (df_clima_feriados["Tempo"] == "Cloudy")]
+
+df_feriados_nao_aprov.to_csv("csvs/analise_api/feriados_nao_aprov.csv", encoding="utf-8", index=False)
+
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Resposta Questão 7: veja o arquivo csvs/analise_api/feriados_nao_aprov.csv\n\n")
+
+# Q8.
+df_feriados_aprov = df_clima_feriados[(df_clima_feriados["Temperatura Média"] >= 20) & (df_clima_feriados["Tempo"] != "Cloudy")]
+
+df_feriados_aprov.to_csv("csvs/analise_api/feriados_aprov.csv", encoding="utf-8", index=False)
+
+# Os 3 feriados aproveitáveis têm o mesmo tempo (Sunny/Clear), logo vamos dizer que o mais aproveitável é o com a maior temperatura.
+dia_feriado_aprov_maior_temp = df_feriados_aprov.loc[df_feriados_aprov["Temperatura Média"].idxmax(), "Feriados"]
+
+with open('respostas_analise_api.txt', 'a', encoding="utf-8") as f: 
+    f.write(f"Resposta Questão 8: o dia de feriado mais aproveitável do ano foi {dia_feriado_aprov_maior_temp}, como visto em csvs/analise_api/feriados_aprov.csv")

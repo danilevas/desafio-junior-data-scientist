@@ -1,0 +1,24 @@
+Resposta Questão 1: foram abertos 1903 chamados no dia 01/04/2023.
+
+Resposta Questão 2: o tipo de chamado que teve mais chamados abertos no dia 01/04/2023 foi Estacionamento irregular, com 373 chamados abertos.
+
+Resposta Questão 3: Os 3 bairros que mais tiveram chamados abertos nesse dia foram:
+    - Campo Grande (124 chamados)
+    - Tijuca (96 chamados)
+    - Barra da Tijuca (60 chamados)
+
+Resposta Questão 4: a subprefeitura com mais chamados abertos nesse dia foi a Zona Norte, com 534 chamados abertos.
+
+Resposta Questão 5: Temos 131 chamados com id_bairro = NULL. Os chamados não tem nenhum tipo de dado de localização. Minhas suposições são que o responsável não pediu ou não conseguiu descobrir a localização da pessoa que ligou, ou que são chamados para os quais essa informação não era relevante.Resposta Questão 6: nenhum chamado com o subtipo "Perturbação do sossego" foi aberto desde 01/01/2022 até 31/12/2023 (incluindo extremidades), porém, neste período, foram abertos 66078 chamados com o TIPO "Perturbação do sossego".
+
+Resposta Questão 7: não temos nenhum chamado com o subtipo "Perturbação do sossego" aberto durante os eventos contidos na tabela de eventos (Reveillon, Carnaval e Rock in Rio), porém temos 1889 chamados com o subtipo "Perturbação do sossego" abertos durante esses períodos.
+
+A tabela dos eventos tratada está no arquivo "csvs/analise_python/7.1_eventos_tratados.csv" e a tabela com os chamados de tipo "Perturbação do sossego" abertos durante os eventos selecionados pelo id_chamado, juntamente com o evento a qual estão associados (caracterizado pelo evento_id), está no arquivo "csvs/analise_python/7.2_chamados_tipo_perturb_sossego_dias_de_evento.csv".
+Coloquei também nesse arquivo as datas de início e fim dos eventos para diferenciar os de mesmo nome sem ter que consultar duas tabelas.
+
+Resposta Questão 8: 0 chamados com o subtipo "Perturbação do sossego" foram abertos nos dias dos eventos da tabela de eventos, mas 1889 chamados com o TIPO "Perturbação do sossego" foram abertos nesses dias.
+Para ver quantos chamados foram abertos nos dias de cada evento, consulte o arquivo "csvs/analise_python/8.2_num_chamados_tipo_perturb_sossego_por_evento"
+
+Resposta Questão 9: o evento com a maior média diária de chamados com o tipo "Perturbação do sossego" foi o Rock in Rio que ocorreu entre os dias 2022-09-08 e 2022-09-11, com uma média de 142.25 chamados por dia de evento.
+
+Resposta Questão 10. As comparações das médias diárias de chamados com o tipo "Perturbação do sossego" nos períodos de cada evento da tabela de eventos e no período de 01/01/2022 até 31/12/2023 estão no arquivo "csvs/analise_sql/10.2_compara_medias_diarias_chamados_tipo_perturb_sossego_eventos_vs_2022_2023"
