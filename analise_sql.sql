@@ -97,78 +97,21 @@ WHERE DATE(data_inicio) = '2023-04-01' AND id_bairro IS NULL;
 -- da pessoa que ligou, ou que são chamados para os quais essa informação não era relevante.
 
 -- ||| Chamados do 1746 em grandes eventos |||
--- Questão 6. Quantos chamados com o subtipo "Perturbação do sossego" foram abertos desde 01/01/2022 até 31/12/2023 (incluindo extremidades)?
+-- Questão 6. Quantos chamados de Perturbação do sossego foram abertos nesse período?
 
--- Agrupando por subtipo para vermos os chamados por subtipo no período especificado, filtrando para o subtipo "Perturbação do sossego" (750,27 MB)
-SELECT subtipo, COUNT(id_chamado) AS total_chamados
+-- Agrupando por subtipo para vermos os chamados por subtipo no período especificado, filtrando para o subtipo "Perturbação do sossego" (266,05 MB)
+SELECT id_subtipo, COUNT(id_chamado) AS total_chamados
 FROM `datario.adm_central_atendimento_1746.chamado`
-WHERE subtipo = 'Perturbação do sossego'
-AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2023-12-31'
-GROUP BY subtipo
-ORDER BY subtipo;
--- A consulta não nos traz nenhum resultado. Isso deve significar que não houveram chamados com esse subtipo no período especificado.
--- Para termos certeza, vamos checar isso.
+WHERE id_subtipo = '5071'
+AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2024-12-31'
+GROUP BY id_subtipo
+ORDER BY id_subtipo;
+-- Temos que 56785 chamados deste subtipo foram abertos neste período.
 
--- Checando se há algum chamado desse subtipo no dataset, em qualquer data (657,84 MB)
-SELECT subtipo, COUNT(id_chamado) AS total_chamados
-FROM `datario.adm_central_atendimento_1746.chamado`
-WHERE subtipo = 'Perturbação do sossego'
-GROUP BY subtipo
-ORDER BY subtipo;
--- A consulta nos retorna que existem 21991 chamados com esse subtipo no dataset.
--- Vamos ver agora quando esses chamados foram abertos.
+-- Resposta Questão 6: 56.785 chamados com o subtipo "Perturbação do sossego" (id_subtipo = 5071) foram abertos
+-- desde 01/01/2022 até 31/12/2024 (incluindo extremidades).
 
--- Checando em quais datas houveram chamados do subtipo "Perturbação do sossego" (750,27 MB)
-SELECT subtipo, DATE(data_inicio) AS data, COUNT(id_chamado) AS total_chamados
-FROM `datario.adm_central_atendimento_1746.chamado`
-WHERE subtipo = 'Perturbação do sossego'
-GROUP BY subtipo, data
-ORDER BY data;
--- Olhando a tabela proveniente dessa consulta, vemos que após o dia 31/12/2020, só houveram chamados do subtipo "Perturbação do sossego" novamente
--- no dia 08/03/2024. Há um gap de mais de 3 anos sem chamados desse subtipo. Logo, realmente podemos afirmar que houveram 0 chamados deste subtipo
--- desde 01/01/2022 até 31/12/2023 (incluindo extremidades).
-
--- Poderíamos nos contentar com essa resposta. Mas não iremos!
--- Primeiro eu pensei: será que pode haver algum outro subtipo parecido com esse, com alguma diferença de grafia?
--- Vendo todos os subtipos distintos na tabela chamado em ordem alfabética (548,16 MB)
-SELECT DISTINCT subtipo
-FROM `datario.adm_central_atendimento_1746.chamado`
-ORDER BY subtipo;
--- Olhando essa tabela, vejo que a única versão do subtipo "Perturbação do sossego" é a escrita dessa forma
--- (chequei por versões com diferenciação de maiúscula-minúscula ou de acento)
-
--- Então eu refleti: será que existe o tipo "Perturbação do sossego"?
--- Logo, chequei todos os tipos presentes
-SELECT DISTINCT tipo
-FROM `datario.adm_central_atendimento_1746.chamado`
-ORDER BY tipo;
--- Sim, esse tipo existe! Vamos analisar em que datas foram feitos chamados deste tipo
-
--- Checando em quais datas houveram chamados do tipo "Perturbação do sossego" (435,18 MB)
-SELECT tipo, DATE(data_inicio) AS data, COUNT(id_chamado) AS total_chamados
-FROM `datario.adm_central_atendimento_1746.chamado`
-WHERE tipo = 'Perturbação do sossego'
-GROUP BY tipo, data
-ORDER BY data;
--- Ahh, agora sim! Olhando a tabela retornada por essa consulta, vemos que chamados do TIPO "Perturbação do sossego" ocorrem com certa consistência desde
--- 01/01/2021 até hoje! Trocando subtipo por tipo, podemos responder às perguntas dessa seção.
-
--- Agrupando por tipo para vermos os chamados por tipo no período especificado, filtrando para o tipo "Perturbação do sossego" (435,18 MB)
-SELECT tipo, COUNT(id_chamado) AS total_chamados
-FROM `datario.adm_central_atendimento_1746.chamado`
-WHERE tipo = 'Perturbação do sossego'
-AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2023-12-31'
-GROUP BY tipo
-ORDER BY tipo;
--- Aqui verificamos que houveram 66078 chamados abertos com o tipo "Perturbação do sossego" no período especificado.
-
--- Por algum motivo "Perturbação do sossego" era usado exclusivamente como subtipo até 31/12/2020, e depois dessa data ele foi usado
--- quase exclusivamente como tipo (tirando um breve período em Março de 2024).
-
--- Resposta Questão 6: nenhum chamado com o subtipo "Perturbação do sossego" foi aberto desde 01/01/2022 até 31/12/2023 (incluindo extremidades),
--- porém, neste período, foram abertos 66078 chamados com o TIPO "Perturbação do sossego".
-
--- Questão 7. Selecione os chamados com esse subtipo que foram abertos durante os eventos contidos na tabela de eventos (Reveillon, Carnaval e Rock in Rio)
+-- Questão 7. Selecione os chamados com esse subtipo que foram abertos durante os eventos contidos na tabela de eventos (Reveillon, Carnaval e Rock in Rio).
 
 -- Quando eu fui olhar a tabela de eventos, percebi que haviam alguns problemas que dificultariam minha análise:
     -- Eventos sem data_inicial ou data_final
@@ -225,7 +168,7 @@ VALUES
   ('19/09 a 22/09 de 2024', '2024-09-19', '2024-09-22', 'Rock in Rio', NULL);
 
 -- Então, para facilitar a identificação de cada evento, incorporei um id (evento_id) e ordenei a tabela, assim como os ids
--- pela data de início do evento, e depois pelo nome do evento.
+-- pela data de início do evento, e depois pelo nome do evento (509 B).
 CREATE OR REPLACE TABLE `processo-seletivo-pcrj.meu_dataset.eventos_numerados` AS
 WITH eventos_numerados AS (
     SELECT 
@@ -243,76 +186,68 @@ ORDER BY data_inicial, evento;
 
 -- Agora sim posso analisar os dados com mais confiança!
 
--- Selecionando os chamados com subtipo "Perturbação do sossego" em dias de eventos da tabela de eventos:
-SELECT e.evento_id, e.evento, e.data_inicial, e.data_final, c.id_chamado
+-- Selecionando os chamados com subtipo "Perturbação do sossego" em dias de eventos da tabela de eventos (266,05 MB):
+SELECT e.evento_id, e.evento, e.data_inicial, e.data_final, DATE(c.data_inicio) as data_abertura, c.id_chamado
 FROM `processo-seletivo-pcrj.meu_dataset.eventos_numerados` e
 INNER JOIN `datario.adm_central_atendimento_1746.chamado` c
     ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
-    AND c.subtipo = 'Perturbação do sossego'
+    AND c.id_subtipo = '5071'
 ORDER BY e.evento_id, c.id_chamado;
--- Como esperado, o retorno foi vazio, pois o subtipo "Perturbação do sossego" praticamente não foi utilizado a partir de 2021,
--- e os eventos são todos posteriores a esse ano.
+-- Temos 1523 registros!
 
--- Vamos fazer a mesma coisa com o TIPO "Perturbação do sossego":
--- Selecionando os chamados com tipo "Perturbação do sossego" em dias de eventos da tabela de eventos:
-SELECT e.evento_id, e.evento, e.data_inicial, e.data_final, c.id_chamado
-FROM `processo-seletivo-pcrj.meu_dataset.eventos_numerados` e
-INNER JOIN `datario.adm_central_atendimento_1746.chamado` c
-    ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
-    AND c.tipo = 'Perturbação do sossego'
-ORDER BY e.evento_id, c.id_chamado;
--- Ahh, agora sim! 1889 registros.
-
--- Resposta Questão 7: não temos nenhum chamado com o subtipo "Perturbação do sossego" aberto durante os eventos
--- contidos na tabela de eventos (Reveillon, Carnaval e Rock in Rio), porém temos 1889 chamados com o subtipo "Perturbação do sossego"
--- abertos durante esses períodos.
+-- Resposta Questão 7: temos 1.523 chamados com o subtipo "Perturbação do sossego" (id_subtipo = 5071) abertos durante os eventos
+-- contidos na tabela de eventos (Reveillon, Carnaval e Rock in Rio).
 
 -- A tabela dos eventos tratada está no arquivo "csvs/analise_sql/7.1_eventos_tratados.csv"
--- e a tabela com os chamados de tipo "Perturbação do sossego" abertos durante os eventos selecionados pelo id_chamado,
+-- e a tabela com os chamados de id_subtipo = 5071 abertos durante os eventos selecionados pelo id_chamado,
 -- juntamente com o evento a qual estão associados (caracterizado pelo evento_id),
 -- está no arquivo "csvs/analise_sql/7.2_chamados_tipo_perturb_sossego_dias_de_evento.csv".
--- Coloquei também nesse arquivo as datas de início e fim dos eventos para diferenciar os de mesmo nome sem ter que consultar duas tabelas.
+-- Coloquei também nesse arquivo as datas de início e fim dos eventos para diferenciar os de mesmo nome sem ter que consultar duas tabelas,
+-- e a data de abertura dos chamados como data_abertura para fins de checagem.
 
 -- Questão 8. Quantos chamados desse subtipo foram abertos em cada evento?
 
--- Consultando a quantidade de chamados com subtipo "Perturbação do sossego" nos dias de cada evento da tabela de eventos:
+-- Consultando a quantidade de chamados com subtipo "Perturbação do sossego" nos dias de cada evento da tabela de eventos (266,05 MB):
 SELECT e.evento_id, e.evento, e.data_inicial, e.data_final, COALESCE(COUNT(c.id_chamado), 0) AS total_chamados
 FROM `processo-seletivo-pcrj.meu_dataset.eventos_numerados` e
 LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
     ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
-    AND c.subtipo = 'Perturbação do sossego'
+    AND c.id_subtipo = '5071'
 GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final
 ORDER BY e.evento_id;
--- Aqui temos 0 para todos os eventos, como esperado.
+-- Curiosamente, durante os eventos de ID 5, 6, 7 e 8 não houveram chamados de id_subtipo = 5071.
+-- Vamos estudar a distribuição de chamados com esse id_subtipo para entender melhor a situação.
 
--- Consultando agora a quantidade de chamados com TIPO "Perturbação do sossego" nos dias de cada evento da tabela de eventos:
-SELECT e.evento_id, e.evento, e.data_inicial, e.data_final, COALESCE(COUNT(c.id_chamado), 0) AS total_chamados
-FROM `processo-seletivo-pcrj.meu_dataset.eventos_numerados` e
-LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
-    ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
-    AND c.tipo = 'Perturbação do sossego'
-GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final
-ORDER BY e.evento_id;
+-- Checando em quais datas houveram chamados do id_subtipo "5071" (266,05 MB)
+SELECT id_subtipo, DATE(data_inicio) AS data, COUNT(id_chamado) AS total_chamados
+FROM `datario.adm_central_atendimento_1746.chamado`
+WHERE id_subtipo = '5071'
+GROUP BY id_subtipo, data
+ORDER BY data;
+-- Com a tabela retornada por essa consulta (encontrada em "csvs/analise_sql/8.2_num_chamados_subtipo_perturb_sossego_por_dia"),
+-- percebe-se que a quantidade de chamados com id_subtipo = 5071 começou a diminuir mais para o final de 2023,
+-- até que eles diminuem tanto que entre 27/03/2024 e 22/09/2024 não há nenhum chamado com esse id_subtipo. Depois disso, os chamados parecem a voltar às quantidades
+-- normais do período até meados de 2023. Por isso, não temos chamados desse id_subtipo durante os eventos
+-- Réveillon 2023-2024, Carnaval 2024, e Rock in Rio 2024 (parte 1 e 2).
 
--- Resposta Questão 8: 0 chamados com o subtipo "Perturbação do sossego" foram abertos nos dias dos eventos da tabela de eventos,
--- mas 1889 chamados com o TIPO "Perturbação do sossego" foram abertos nesses dias. Para ver quantos chamados foram abertos nos dias de cada evento,
--- consulte o arquivo "csvs/analise_sql/8.2_num_chamados_tipo_perturb_sossego_por_evento"
+-- Resposta Questão 8: 1.523 chamados com o subtipo "Perturbação do sossego" (id_subtipo = 5071) foram abertos nos dias dos eventos da tabela de eventos.
+-- Para ver quantos chamados foram abertos nos dias de cada evento,
+-- consulte o arquivo "csvs/analise_sql/8.1_num_chamados_subtipo_perturb_sossego_por_evento"
 
 -- Questão 9. Qual evento teve a maior média diária de chamados abertos desse subtipo?
 
--- A partir daqui eu vou olhar apenas os chamados pelo tipo, já que vimos que não há nenhum chamado do subtipo "Perturbação do sossego" nos períodos desejados.
--- Primeiro vamos agrupar pelos eventos e por cada dia de evento, para vermos quantos chamados houveram em cada dia de cada evento (435,18 MB):
+-- Primeiro vamos agrupar pelos eventos e por cada dia de evento, para vermos quantos chamados com o subtipo desejado houveram em cada dia de cada evento (266,05 MB):
 SELECT e.evento_id, e.evento, e.data_inicial, e.data_final, DATE(c.data_inicio) as data_chamado, COUNT(c.id_chamado) AS total_chamados,
-FROM `teste-big-query-454013.meu_dataset.eventos_numerados` e
+FROM `processo-seletivo-pcrj.meu_dataset.eventos_numerados` e
 LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
     ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
-    AND c.tipo = 'Perturbação do sossego'
-    AND c.id_chamado IS NOT NULL
+    AND c.id_subtipo = '5071'
+    AND c.id_chamado IS NOT NULL 
 GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final, data_chamado
 ORDER BY evento_id, data_chamado;
 
--- Agora vamos aninhar essa consulta em outra para termos a média de chamado entre os dias de cada evento.
--- Além disso vamos aproveitar para criar uma tabela com esses dados, o que nos será útil para a questão 10 (435,18 MB):
+-- Agora vamos aninhar essa consulta em outra para termos a média de chamados entre os dias de cada evento.
+-- Além disso vamos aproveitar para criar uma tabela com esses dados, o que nos será útil para a questão 10 (266,05 MB):
 CREATE OR REPLACE TABLE `processo-seletivo-pcrj.meu_dataset.media_diaria_chamados_evento` AS
 WITH media_diaria_chamados_evento AS (
     WITH chamados_por_dia_e_evento AS (
@@ -326,7 +261,7 @@ WITH media_diaria_chamados_evento AS (
         FROM `processo-seletivo-pcrj.meu_dataset.eventos_numerados` e
         LEFT JOIN `datario.adm_central_atendimento_1746.chamado` c
             ON DATE(c.data_inicio) BETWEEN e.data_inicial AND e.data_final
-            AND c.tipo = 'Perturbação do sossego'
+            AND c.id_subtipo = '5071'
             AND c.id_chamado IS NOT NULL
         GROUP BY e.evento_id, e.evento, e.data_inicial, e.data_final, data_chamado
         ORDER BY evento_id, data_chamado
@@ -339,37 +274,49 @@ WITH media_diaria_chamados_evento AS (
 SELECT * FROM media_diaria_chamados_evento
 ORDER BY media_diaria_chamados DESC;
 -- Podemos ver, pela tabela gerada por essa consulta, as médias diárias de todos os eventos.
--- Arquivo: "csvs/analise_sql/9.2_medias_diarias_chamados_tipo_perturb_sossego_eventos"
+-- Arquivo: "csvs/analise_sql/9.2_medias_diarias_chamados_subtipo_perturb_sossego_eventos"
 
--- Resposta Questão 9: o evento com a maior média diária de chamados com o tipo "Perturbação do sossego" foi
--- a segunda parte do Rock in Rio 2022, compreendida entre os dias 08/09/2022 e 11/09/2022, com uma média de 142.25 chamados por dia de evento.
+-- Resposta Questão 9: o evento com a maior média diária de chamados com o subtipo "Perturbação do sossego" (id_subtipo = 5071) foi
+-- a segunda parte do Rock in Rio 2022, compreendida entre os dias 08/09/2022 e 11/09/2022, com uma média de 137.5 chamados por dia de evento.
 
 -- Questão 10. Compare as médias diárias de chamados abertos desse subtipo durante os eventos específicos (Reveillon, Carnaval e Rock in Rio)
--- e a média diária de chamados abertos desse subtipo considerando todo o período de 01/01/2022 até 31/12/2023.
+-- e a média diária de chamados abertos desse subtipo considerando todo o período de 01/01/2022 até 31/12/2024.
 
--- Primeiro vamos descobrir a média diária de chamados abertos com o tipo "Perturbação do sossego" no período de 01/01/2022 até 31/12/2023 (435,29 MB):
+-- Primeiro vamos descobrir a média diária de chamados abertos com o id_subtipo "5071" no período de 01/01/2022 até 31/12/2024 (266,05 MB):
+-- TEMOS QUE LEVAR EM CONTA OS DIAS SEM CHAMADOS
 WITH chamados_por_dia AS (
     SELECT 
         DATE(data_inicio) as data_chamado,
         COUNT(id_chamado) AS total_chamados,
     FROM `datario.adm_central_atendimento_1746.chamado`
-    WHERE tipo = 'Perturbação do sossego'
+    WHERE id_subtipo = '5071'
     AND id_chamado IS NOT NULL
-    AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2023-12-31' 
+    AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2024-12-31' 
     GROUP BY data_chamado
     ORDER BY data_chamado
 )
 SELECT ROUND(AVG(total_chamados), 2) AS media_diaria_chamados
 FROM chamados_por_dia;
--- Temos que essa média é de 90.52 chamados por dia.
+-- De acordo com essa consulta, temos que essa média é de 68.58 chamados por dia.
+-- Temos que lembrar, porém, que temos que contar os dias sem chamado para fazermos a média. Esse GROUP BY está excluindo esses dias.
+-- Vamos então tentar uma abordagem diferente.
 
--- Vamos então, comparar as médias diárias em cada evento a essa média de 90.52 chamados por dia.
+-- Contando a quantidade de id_chamado com id_subtipo = 5071 entre 01/01/2022 e 31/12/2024,
+-- e dividindo esse valor pela quantidade de dias entre as duas datas (266,05 MB):
+SELECT ROUND(COUNT(id_chamado) / (DATE_DIFF(DATE('2024-12-31'), DATE('2022-01-01'), DAY) + 1), 2) AS media_diaria_chamados
+FROM `datario.adm_central_atendimento_1746.chamado`
+WHERE id_subtipo = '5071'
+AND DATE(data_inicio) BETWEEN '2022-01-01' AND '2024-12-31';
+-- Temos, então, que a média diária é de 51.81 chamados por dia.
+
+-- Vamos então, comparar as médias diárias em cada evento a essa média de 51.81 chamados por dia.
 -- Criei um campo chamado "pct_diferenca" que nos diz quantos % maior ou menor os valores da média diária dos eventos são
--- em comparação à média diária no período de 01/01/2022 até 31/12/2023 (396 B):
+-- em comparação à média diária no período de 01/01/2022 até 31/12/2024 (396 B):
 SELECT evento_id, evento, data_inicial, data_final, media_diaria_chamados,
-CONCAT(ROUND(((media_diaria_chamados - 90.52)/90.52) * 100, 2), '%') AS pct_diferenca
+CONCAT(ROUND(((media_diaria_chamados - 51.81)/51.81) * 100, 2), '%') AS pct_diferenca
 FROM `processo-seletivo-pcrj.meu_dataset.media_diaria_chamados_evento`
-ORDER BY media_diaria_chamados DESC;
+ORDER BY evento_id;
 
--- Resposta Questão 10. As comparações das médias diárias de chamados com o tipo "Perturbação do sossego" nos períodos de cada evento da tabela de eventos
--- e no período de 01/01/2022 até 31/12/2023 estão no arquivo "csvs/analise_sql/10.2_compara_medias_diarias_chamados_tipo_perturb_sossego_eventos_vs_2022_2023"
+-- Resposta Questão 10. As comparações das médias diárias de chamados com o subtipo "Perturbação do sossego" (id_subtipo = 5071)
+-- nos períodos de cada evento da tabela de eventos e no período de 01/01/2022 até 31/12/2024
+-- estão no arquivo "csvs/analise_sql/10.2_compara_medias_diarias_chamados_tipo_perturb_sossego_eventos_vs_2022_2023"

@@ -1,0 +1,10 @@
+evento_id,evento,data_inicial,data_final,media_diaria_chamados
+1,Rock in Rio,2022-09-02,2022-09-04,132.0
+2,Rock in Rio,2022-09-08,2022-09-11,137.5
+3,Réveillon,2022-12-30,2023-01-01,49.0
+4,Carnaval,2023-02-18,2023-02-21,63.0
+5,Réveillon,2023-12-30,2024-01-01,0.0
+6,Carnaval,2024-02-10,2024-02-14,0.0
+7,Rock in Rio,2024-09-13,2024-09-15,0.0
+8,Rock in Rio,2024-09-19,2024-09-22,0.0
+9,Réveillon,2024-12-29,2025-01-01,44.5
